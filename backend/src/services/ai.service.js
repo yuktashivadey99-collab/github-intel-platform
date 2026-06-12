@@ -1,19 +1,19 @@
-const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 let client;
 
 const getClient = () => {
     if (!client) {
-        if (!process.env.ANTHROPIC_API_KEY) {
-            throw new Error('ANTHROPIC_API_KEY is not set in environment variables.');
+        if (!process.env.GEMINI_API_KEY) {
+            throw new Error('GEMINI_API_KEY is not set in environment variables.');
         }
-        client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+        client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     }
     return client;
 };
 
 /**
- * Anthropic Claude AI service for generating repository intelligence insights
+ * Google Gemini AI service for generating repository intelligence insights
  */
 const aiService = {
     /**
@@ -22,11 +22,10 @@ const aiService = {
      * @returns {Object} AI-generated summary, strengths, weaknesses, recommendations, security flags
      */
     generateInsights: async (analysisData) => {
-        const anthropic = getClient();
         const { repoMetadata, healthScore, commitPatterns, contributors, docQuality, techStack } =
             analysisData;
 
-        const prompt = `You are an expert software engineering consultant analyzing a GitHub repository. 
+        const prompt = `You are an expert software engineering consultant analyzing a GitHub repository.
 Based on the following analysis data, provide actionable intelligence insights.
 
 ## Repository Data
@@ -71,30 +70,35 @@ Respond with a JSON object (no markdown, raw JSON only) with exactly these keys:
   "strengths": ["strength 1", "strength 2", "strength 3"],
   "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
   "recommendations": ["actionable recommendation 1", "actionable recommendation 2", "actionable recommendation 3"],
-  "securityFlags": ["security concern 1"] // empty array if none
+  "securityFlags": ["security concern 1"]
 }`;
 
         try {
-            const message = await anthropic.messages.create({
-                model: 'claude-3-5-haiku-20241022', // Fast + affordable
-                max_tokens: 1024,
-                messages: [{ role: 'user', content: prompt }],
+            const genAI = getClient();
+            const model = genAI.getGenerativeModel({
+                model: 'gemini-1.5-flash',
+                generationConfig: {
+                    responseMimeType: 'application/json',
+                    maxOutputTokens: 1024,
+                    temperature: 0.4,
+                },
             });
 
-            const content = message.content[0]?.text || '{}';
+            const result = await model.generateContent(prompt);
+            const text = result.response.text();
 
             // Parse JSON response
-            const jsonMatch = content.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) throw new Error('AI response did not contain valid JSON');
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error('Gemini response did not contain valid JSON');
 
             return JSON.parse(jsonMatch[0]);
 
         } catch (err) {
-            console.warn('[aiService] Claude API failed:', err.message);
+            console.warn('[aiService] Gemini API failed:', err.message);
 
-            // Return basic fallback insights
+            // Graceful fallback — no crash
             return {
-                summary: `Repository analysis for ${repoMetadata?.description || 'this project'} completed. Health score: ${healthScore?.score || 'N/A'}/100.`,
+                summary: `Repository analysis completed. Health score: ${healthScore?.score || 'N/A'}/100.`,
                 strengths: healthScore?.score >= 70 ? ['Good overall health score'] : [],
                 weaknesses: docQuality?.overallScore < 50 ? ['Documentation needs improvement'] : [],
                 recommendations: [

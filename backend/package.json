@@ -9,7 +9,7 @@
         "lint": "eslint src/**/*.js"
     },
     "dependencies": {
-        "@anthropic-ai/sdk": "^0.20.0",
+        "@google/generative-ai": "^0.21.0",
         "@octokit/rest": "^20.0.2",
         "axios": "^1.6.0",
         "bcryptjs": "^2.4.3",
