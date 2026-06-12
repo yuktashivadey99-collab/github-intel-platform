@@ -4,8 +4,6 @@ GitIntel is a full-stack platform that takes any public GitHub repository and br
 
 Instead of just counting stars and forks, it pulls raw data via the GitHub API, processes it through 5 distinct ML models, and feeds the results into Google Gemini to generate an executive summary. The goal is to help developers, hiring managers, and open-source contributors instantly understand the state of a codebase before they commit time to it.
 
-![GitIntel Dashboard Preview](https://via.placeholder.com/1000x500/030308/818cf8?text=GitIntel+Dashboard)
-
 ## How It Works
 
 When you drop a GitHub URL into the dashboard, the backend triggers a concurrent pipeline:
