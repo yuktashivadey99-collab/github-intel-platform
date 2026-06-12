@@ -124,6 +124,7 @@ const analyzeRepo = asyncHandler(async (req, res) => {
         await Report.create({
             user: req.user._id,
             analysis: analysis._id,
+            title: `Analysis Report — ${owner}/${repo}`,
             repoUrl,
             summary: aiInsights?.summary || `Analysis for ${owner}/${repo}`,
             overallScore,
